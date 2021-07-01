@@ -1,4 +1,4 @@
-from scipy.optimize import root
+from scipy.optimize import linearmixing
 from numpy import log
 
 def exit():
@@ -12,6 +12,13 @@ def func(x):
 def derivFunc(x):
     return ((2*x*log(x)+1)/(x*x))
     
+# Очень глупая ф-ция для проверки округления
+def check_round(n):
+    if ('.' in str(n)):
+        return len(str(n)) - 2
+    elif ('e' in str(n)):
+        return int(str(n).split('-')[1])
+    
 # Метод дихотомии (половинного деления)
 def bisec_method(a, b, epsilon):
     a0 = a
@@ -21,7 +28,10 @@ def bisec_method(a, b, epsilon):
         return
 
     c = a
+    i = 0
     while ((b - a) >= epsilon):
+        # Тикаем счетчик
+        i += 1
         # Находим среднюю точку
         c = (a + b) / 2
         # Проверяем, если средняя точка - корень
@@ -32,15 +42,27 @@ def bisec_method(a, b, epsilon):
             b = c
         else:
             a = c
-    print("Корень: ", c)
+    # Округляем корень до разрядов из epsilon
+    res = round(c, check_round(epsilon))
+    print("Корень: ", res)
+    print("Итераций: ", i)
+    print("Значение функции: ", func(c))
+    # Запись в файл
     with open("result.txt", "w") as f:
-        f.writelines(["Метод дихотомии (половинного деления) (a = {}, b = {}, epsilon = {}): \n".format(a0, b0, epsilon), "Корень: {}".format(c)])
+        f.writelines(["Метод дихотомии (половинного деления) (a = {}, b = {}, epsilon = {}): \n".format(a0, b0, epsilon),
+                    "Корень: {}\n".format(res),
+                    "Итераций: {}\n".format(i),
+                    "Значение функции: {}".format(func(c))])
     
 # Метод Ньютона
 def newton_method(x, epsilon):
     x0 = x
+    i = 0
+    flag = True
     h = func(x) / derivFunc(x)
     while abs(h) >= epsilon:
+        # Тикаем счетчик
+        i += 1
         h = func(x) / derivFunc(x)
         # Формула Ньютона:
         # x(i+1) = x(i) - f(x) / f'(x)
@@ -49,23 +71,47 @@ def newton_method(x, epsilon):
         if x <= 0:
             print("Значение вышло за ОДЗ функции при итерации.")
             x = "не найден"
+            flag = False
+            # Запись в файл
+            with open("result.txt", "w") as f:
+                f.writelines(["Метод Ньютона (x0 = {}, epsilon = {}): \n".format(x0, epsilon),
+                    "Корень: не найден (значение вышло за ОДЗ функции при итерации.)\n",
+                    "Итераций: {}\n".format(i),
+                    "Значение функции: нет"])
             break
-     
-    print("Корень: ", x)
-    with open("result.txt", "w") as f:
-        f.writelines(["Метод Ньютона (x0 = {}, epsilon = {}): \n".format(x0, epsilon), "Корень: {}\n".format(x)])
+
+    if (flag == True):
+        res = round(x, check_round(epsilon))
+        print("Корень: ", res)
+        print("Итераций: ", i)
+        print("Значение функции: ", func(x))
+        # Запись в файл
+        with open("result.txt", "w") as f:
+            f.writelines(["Метод Ньютона (x0 = {}, epsilon = {}): \n".format(x0, epsilon),
+                        "Корень: {}\n".format(res),
+                        "Итераций: {}\n".format(i),
+                        "Значение функции: {}".format(func(x))])
 
 # Метод простых итераций
 def simple_iter_method(x0):
-    res = root(lambda x: func(x), x0=x0)
-    if (res.success == True):
-        print("Корень: ", res.x[0])
-        with open("result.txt", "w") as f:
-            f.writelines(["Метод простых итераций (x0 = {}): \n".format(x0), "Корень: {}\n".format(res.x[0])])
-    else:
-        print("Корень: не найден.")
-        with open("result.txt", "w") as f:
-            f.writelines(["Метод простых итераций (x0 = {}): \n".format(x0), "Корень: не найден"])
+   try:
+    res = linearmixing(lambda x: func(x), xin=x0, maxiter=500)
+   except Exception:
+    print("\nКорень: не найден (отсутствие сходимости).")
+    # Запись в файл
+    with open("result.txt", "w") as f:
+        f.writelines(["Метод простых итераций (x0 = {}): \n".format(x0),
+                    "Корень: не найден (отсутствие сходимости).",
+                    "Итераций: нет",
+                    "Значение функции: нет"])
+   else:
+    print("\nКорень: ", res.x[0])
+    # Запись в файл
+    with open("result.txt", "w") as f:
+        f.writelines(["Метод простых итераций (x0 = {}): \n".format(x0),
+                    "Корень: {}".format(res.x[0]),
+                    "Итераций: {}".format(res.nit),
+                    "Значение функции: {}".format(func(res.x[0]))])
 
 def main():
    try:
@@ -76,7 +122,7 @@ def main():
     if (choose == "1"):
         a = input("Введите значение границы a: ")
         b = input("Введите значение границы b: ")
-        epsilon = input("Введите значение абсолютной погрешности (например, 0.01): ")
+        epsilon = input("Введите значение абсолютной погрешности (например, 0.01 либо 1e-12): ")
         if (a > "0" and b > "0"):
             bisec_method(int(a), int(b), float(epsilon))
         else:
@@ -93,7 +139,7 @@ def main():
     # Метод Ньютона
     elif (choose == "3"):
         x0 = input("Введите значение x0 (начального приближения): ")
-        epsilon = input("Введите значение абсолютной погрешности (например, 0.01): ")
+        epsilon = input("Введите значение абсолютной погрешности (например, 0.01 либо 2e-12): ")
         if (epsilon == "0"):
             print("В данном случае значение абсолютной погрешности не может быть равно нулю.")
             exit()
