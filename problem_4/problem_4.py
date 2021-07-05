@@ -78,7 +78,7 @@ def main():
         text = transfer_array_str(read_file())
     except:
         print("Файл source.txt не существует.")
-        return
+        exit()
     print("Задача №4\nИсходный текст:\n{}\nВыберите метод:\n1) Поиск и замена строк из набора\n2) Нахождение частоты повторения строки\n3) Вставка заданной строки после найденной\n".format(text))
     choose = int(input("(1, 2, 3): "))
     
