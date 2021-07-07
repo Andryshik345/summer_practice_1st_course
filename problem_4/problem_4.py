@@ -12,6 +12,7 @@ def transfer_array_str(n):
 class StringFileOperations:
     def __init__(self):
         pass
+
     # Функция для чтения строк из файла и удаления '\n' символов
     def read_file(self):
         text = ""
@@ -78,11 +79,11 @@ class StringFileOperations:
 def main():
    try:
     # Проверяем, если исходный файл с текстом существует
-    #try:
-    text = transfer_array_str(StringFileOperations().read_file())
-    #except:
-        #print("Файл source.txt не существует.")
-        #exit()
+    try:
+        text = transfer_array_str(StringFileOperations().read_file())
+    except:
+        print("Файл source.txt не существует.")
+        exit()
     print("Задача №4\nИсходный текст:\n{}\nВыберите метод:\n1) Поиск и замена строк из набора\n2) Нахождение частоты повторения строки\n3) Вставка заданной строки после найденной\n".format(text))
     choose = int(input("(1, 2, 3): "))
     
